@@ -8,7 +8,8 @@ using System.Text;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using GameStore.Api.Middleware;
-
+using Scalar.AspNetCore;
+using Microsoft.AspNetCore.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add Rate Limiting
@@ -92,6 +93,7 @@ app.UseExceptionHandler(); // Use Global Exception Handler
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseRateLimiter(); // Use Rate Limiting
