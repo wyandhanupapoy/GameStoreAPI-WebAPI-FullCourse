@@ -1,5 +1,6 @@
 using GameStore.Api.Dtos;
 using GameStore.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GameStore.Api.Controllers;
@@ -9,13 +10,13 @@ namespace GameStore.Api.Controllers;
 public class GamesController(IGameService gameService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GameSummaryDto>>> GetGames()
+    public async Task<ActionResult<PagedResultDto<GameSummaryDto>>> GetGames([FromQuery] GameFilterDto filter)
     {
-        var games = await gameService.GetAllGamesAsync();
-        return Ok(games);
+        var result = await gameService.GetAllGamesAsync(filter);
+        return Ok(result);
     }
 
-    [HttpGet("{id}", Name = "GetGame")]
+    [HttpGet("{id:int}", Name = "GetGame")]
     public async Task<ActionResult<GameDetailsDto>> GetGame(int id)
     {
         var game = await gameService.GetGameByIdAsync(id);
@@ -24,6 +25,7 @@ public class GamesController(IGameService gameService) : ControllerBase
         return Ok(game);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<GameDetailsDto>> CreateGame(CreateGameDto newGame)
     {
@@ -31,7 +33,8 @@ public class GamesController(IGameService gameService) : ControllerBase
         return CreatedAtRoute("GetGame", new { id = game.Id }, game);
     }
 
-    [HttpPut("{id}")]
+    [Authorize]
+    [HttpPatch("{id:int}")]
     public async Task<IActionResult> UpdateGame(int id, UpdateGameDto updatedGame)
     {
         var isUpdated = await gameService.UpdateGameAsync(id, updatedGame);
@@ -40,7 +43,8 @@ public class GamesController(IGameService gameService) : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    [Authorize]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteGame(int id)
     {
         await gameService.DeleteGameAsync(id);
