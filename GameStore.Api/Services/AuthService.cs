@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GameStore.Api.Dtos;
+using GameStore.Api.Dtos.Auth;
 using GameStore.Api.Models;
 using GameStore.Api.Repositories;
 using Microsoft.IdentityModel.Tokens;

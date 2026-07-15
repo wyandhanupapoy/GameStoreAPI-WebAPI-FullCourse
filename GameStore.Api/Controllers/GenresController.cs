@@ -1,4 +1,5 @@
-using GameStore.Api.Dtos;
+using GameStore.Api.Dtos.Genres;
+using GameStore.Api.Dtos.Common;
 using GameStore.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,10 @@ namespace GameStore.Api.Controllers;
 public class GenresController(IGenreService genreService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GenreDto>>> GetGenres()
+    public async Task<ActionResult<PagedResultDto<GenreDto>>> GetGenres([FromQuery] GenreFilterDto filter)
     {
-        var genres = await genreService.GetAllGenresAsync();
-        return Ok(genres);
+        var result = await genreService.GetAllGenresAsync(filter);
+        return Ok(result);
     }
 
     [HttpGet("{id:int}", Name = "GetGenre")]

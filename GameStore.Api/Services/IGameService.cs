@@ -1,4 +1,5 @@
-using GameStore.Api.Dtos;
+using GameStore.Api.Dtos.Games;
+using GameStore.Api.Dtos.Common;
 
 namespace GameStore.Api.Services;
 

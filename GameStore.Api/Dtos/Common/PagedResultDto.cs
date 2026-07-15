@@ -1,4 +1,4 @@
-namespace GameStore.Api.Dtos;
+namespace GameStore.Api.Dtos.Common;
 
 public class PagedResultDto<T>
 {

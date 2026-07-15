@@ -1,15 +1,56 @@
-using GameStore.Api.Dtos;
+using GameStore.Api.Dtos.Genres;
 using GameStore.Api.Models;
 using GameStore.Api.Repositories;
+
+using GameStore.Api.Dtos.Common;
+using Npgsql;
 
 namespace GameStore.Api.Services;
 
 public class GenreService(IGenreRepository genreRepository) : IGenreService
 {
-    public async Task<IEnumerable<GenreDto>> GetAllGenresAsync()
+    public async Task<PagedResultDto<GenreDto>> GetAllGenresAsync(GenreFilterDto filter)
     {
-        var genres = await genreRepository.GetAllAsync();
-        return genres.Select(genre => new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt));
+        var sql = "SELECT * FROM \"Genres\" WHERE 1=1";
+        var parameters = new List<NpgsqlParameter>();
+        int paramIndex = 0;
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            sql += $" AND \"Name\" ILIKE @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", $"%{filter.Search}%"));
+            paramIndex++;
+        }
+
+        if (filter.StartDate.HasValue)
+        {
+            sql += $" AND \"CreatedAt\" >= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.StartDate.Value));
+            paramIndex++;
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            sql += $" AND \"CreatedAt\" <= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.EndDate.Value));
+            paramIndex++;
+        }
+
+        var (items, totalCount) = await genreRepository.GetAllWithRawSqlAsync(
+            sql,
+            parameters.ToArray(),
+            filter.Page,
+            filter.PageSize);
+
+        var genreDtos = items.Select(genre => new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt));
+
+        return new PagedResultDto<GenreDto>
+        {
+            Items = genreDtos,
+            TotalCount = totalCount,
+            Page = filter.Page,
+            PageSize = filter.PageSize
+        };
     }
 
     public async Task<GenreDto?> GetGenreByIdAsync(int id)

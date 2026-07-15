@@ -29,6 +29,25 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
         return await query.ToListAsync();
     }
 
+    public async Task<(IEnumerable<Genre> Items, int TotalCount)> GetAllWithRawSqlAsync(string sql, object[] parameters, int page, int pageSize, string? includeProperties = null)
+    {
+        IQueryable<Genre> query = _dbContext.Genres.FromSqlRaw(sql, parameters);
+        
+        int totalCount = await query.CountAsync();
+        
+        if (includeProperties != null)
+        {
+            foreach (var includeProp in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProp.Trim());
+            }
+        }
+        
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        
+        return (items, totalCount);
+    }
+
     public async Task<Genre?> GetAsync(Expression<Func<Genre, bool>> filter, string? includeProperties = null)
     {
         IQueryable<Genre> query = _dbContext.Genres;

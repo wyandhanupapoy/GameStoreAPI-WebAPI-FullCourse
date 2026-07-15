@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace GameStore.Api.Dtos;
+namespace GameStore.Api.Dtos.Auth;
 
 public record RegisterDto(
     [Required][StringLength(50)] string Username,

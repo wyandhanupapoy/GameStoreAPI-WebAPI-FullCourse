@@ -1,4 +1,4 @@
-namespace GameStore.Api.Dtos;
+namespace GameStore.Api.Dtos.Games;
 
 public record GameFilterDto(
     string? Search,

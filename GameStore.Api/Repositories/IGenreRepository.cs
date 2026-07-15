@@ -6,6 +6,7 @@ namespace GameStore.Api.Repositories;
 public interface IGenreRepository
 {
     Task<IEnumerable<Genre>> GetAllAsync(Expression<Func<Genre, bool>>? filter = null, string? includeProperties = null);
+    Task<(IEnumerable<Genre> Items, int TotalCount)> GetAllWithRawSqlAsync(string sql, object[] parameters, int page, int pageSize, string? includeProperties = null);
     Task<Genre?> GetAsync(Expression<Func<Genre, bool>> filter, string? includeProperties = null);
     Task AddAsync(Genre entity);
     void Update(Genre entity);
