@@ -1,5 +1,5 @@
-using GameStore.Api.Dtos.Games;
 using GameStore.Api.Dtos.Common;
+using GameStore.Api.Dtos.Games;
 using GameStore.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +41,7 @@ public class GamesController(IGameService gameService) : ControllerBase
         var isUpdated = await gameService.UpdateGameAsync(id, updatedGame);
 
         if (!isUpdated) return NotFound();
-        return NoContent();
+        return Ok();
     }
 
     [Authorize]
@@ -49,6 +49,6 @@ public class GamesController(IGameService gameService) : ControllerBase
     public async Task<IActionResult> DeleteGame(int id)
     {
         await gameService.DeleteGameAsync(id);
-        return NoContent();
+        return Ok();
     }
 }

@@ -1,5 +1,5 @@
-using GameStore.Api.Dtos.Genres;
 using GameStore.Api.Dtos.Common;
+using GameStore.Api.Dtos.Genres;
 using GameStore.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +39,7 @@ public class GenresController(IGenreService genreService) : ControllerBase
     {
         var isUpdated = await genreService.UpdateGenreAsync(id, updatedGenre);
         if (!isUpdated) return NotFound();
-        return NoContent();
+        return Ok();
     }
 
     [Authorize]
@@ -47,6 +47,6 @@ public class GenresController(IGenreService genreService) : ControllerBase
     public async Task<IActionResult> DeleteGenre(int id)
     {
         await genreService.DeleteGenreAsync(id);
-        return NoContent();
+        return Ok();
     }
 }
