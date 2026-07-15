@@ -49,6 +49,8 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
             paramIndex++;
         }
 
+        sql += " ORDER BY \"Id\" ASC";
+
         var (items, totalCount) = await gameRepository.GetAllWithRawSqlAsync(
             sql,
             parameters.ToArray(),
@@ -93,7 +95,6 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
 
     public async Task<GameDetailsDto> CreateGameAsync(CreateGameDto newGame)
     {
-        // Akses repository ke-2 (GenreRepository) untuk validasi (Membuktikan 2 repo dalam 1 service)
         var genre = await genreRepository.GetAsync(g => g.Id == newGame.GenreId);
         if (genre is null)
         {
@@ -108,10 +109,7 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
             ReleaseDate = newGame.ReleaseDate
         };
 
-        // Akses repository pertama (GameRepository) untuk operasi inti
         await gameRepository.AddAsync(game);
-
-        // Memanggil SaveAsync di salah satu repository
         await gameRepository.SaveAsync();
 
         return new GameDetailsDto(game.Id, game.Name, game.GenreId, game.Price, game.ReleaseDate, game.CreatedAt, game.UpdatedAt);
@@ -124,7 +122,6 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
 
         if (updatedGame.GenreId.HasValue)
         {
-            // Akses repository ke-2 (GenreRepository) untuk validasi
             var genre = await genreRepository.GetAsync(g => g.Id == updatedGame.GenreId.Value);
             if (genre is null)
             {

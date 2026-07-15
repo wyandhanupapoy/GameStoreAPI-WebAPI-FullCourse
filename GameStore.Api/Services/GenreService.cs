@@ -36,6 +36,8 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
             paramIndex++;
         }
 
+        sql += " ORDER BY \"Id\" ASC";
+
         var (items, totalCount) = await genreRepository.GetAllWithRawSqlAsync(
             sql,
             parameters.ToArray(),
