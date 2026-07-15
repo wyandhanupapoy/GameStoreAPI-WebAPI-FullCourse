@@ -2,7 +2,6 @@ using GameStore.Api.Dtos.Games;
 using GameStore.Api.Dtos.Common;
 using GameStore.Api.Models;
 using GameStore.Api.Repositories;
-using Npgsql;
 
 namespace GameStore.Api.Services;
 
@@ -10,53 +9,7 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
 {
     public async Task<PagedResultDto<GameSummaryDto>> GetAllGamesAsync(GameFilterDto filter)
     {
-        var sql = "SELECT * FROM \"Games\" WHERE 1=1";
-        var parameters = new List<NpgsqlParameter>();
-        int paramIndex = 0;
-
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-        {
-            sql += $" AND \"Name\" ILIKE @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", $"%{filter.Search}%"));
-            paramIndex++;
-        }
-
-        if (filter.MinPrice.HasValue)
-        {
-            sql += $" AND \"Price\" >= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.MinPrice.Value));
-            paramIndex++;
-        }
-
-        if (filter.MaxPrice.HasValue)
-        {
-            sql += $" AND \"Price\" <= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.MaxPrice.Value));
-            paramIndex++;
-        }
-
-        if (filter.StartDate.HasValue)
-        {
-            sql += $" AND \"ReleaseDate\" >= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.StartDate.Value));
-            paramIndex++;
-        }
-
-        if (filter.EndDate.HasValue)
-        {
-            sql += $" AND \"ReleaseDate\" <= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.EndDate.Value));
-            paramIndex++;
-        }
-
-        sql += " ORDER BY \"Id\" ASC";
-
-        var (items, totalCount) = await gameRepository.GetAllWithRawSqlAsync(
-            sql,
-            parameters.ToArray(),
-            filter.Page,
-            filter.PageSize,
-            includeProperties: "Genre");
+        var (items, totalCount) = await gameRepository.GetAllWithFilterAsync(filter, includeProperties: "Genre");
 
         var summaryItems = items.Select(game => new GameSummaryDto(
             game.Id,

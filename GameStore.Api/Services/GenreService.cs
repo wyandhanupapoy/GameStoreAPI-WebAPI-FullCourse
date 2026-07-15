@@ -1,9 +1,7 @@
+using GameStore.Api.Dtos.Common;
 using GameStore.Api.Dtos.Genres;
 using GameStore.Api.Models;
 using GameStore.Api.Repositories;
-
-using GameStore.Api.Dtos.Common;
-using Npgsql;
 
 namespace GameStore.Api.Services;
 
@@ -11,38 +9,7 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
 {
     public async Task<PagedResultDto<GenreDto>> GetAllGenresAsync(GenreFilterDto filter)
     {
-        var sql = "SELECT * FROM \"Genres\" WHERE 1=1";
-        var parameters = new List<NpgsqlParameter>();
-        int paramIndex = 0;
-
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-        {
-            sql += $" AND \"Name\" ILIKE @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", $"%{filter.Search}%"));
-            paramIndex++;
-        }
-
-        if (filter.StartDate.HasValue)
-        {
-            sql += $" AND \"CreatedAt\" >= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.StartDate.Value));
-            paramIndex++;
-        }
-
-        if (filter.EndDate.HasValue)
-        {
-            sql += $" AND \"CreatedAt\" <= @p{paramIndex}";
-            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.EndDate.Value));
-            paramIndex++;
-        }
-
-        sql += " ORDER BY \"Id\" ASC";
-
-        var (items, totalCount) = await genreRepository.GetAllWithRawSqlAsync(
-            sql,
-            parameters.ToArray(),
-            filter.Page,
-            filter.PageSize);
+        var (items, totalCount) = await genreRepository.GetAllWithFilterAsync(filter);
 
         var genreDtos = items.Select(genre => new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt));
 
@@ -81,7 +48,7 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
         var existingGenre = await genreRepository.GetAsync(g => g.Id == id);
         if (existingGenre is null) return false;
 
-        if (updatedGenre.Name != null) existingGenre.Name = updatedGenre.Name;
+        existingGenre.Name = updatedGenre.Name;
 
         genreRepository.Update(existingGenre);
         await genreRepository.SaveAsync();

@@ -1,7 +1,9 @@
 using System.Linq.Expressions;
 using GameStore.Api.Data;
 using GameStore.Api.Models;
+using GameStore.Api.Dtos.Games;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace GameStore.Api.Repositories;
 
@@ -29,9 +31,60 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
         return await query.ToListAsync();
     }
 
-    public async Task<(IEnumerable<Game> Items, int TotalCount)> GetAllWithRawSqlAsync(string sql, object[] parameters, int page, int pageSize, string? includeProperties = null)
+    public async Task<(IEnumerable<Game> Items, int TotalCount)> GetAllWithFilterAsync(GameFilterDto filter, string? includeProperties = null)
     {
-        IQueryable<Game> query = _dbContext.Games.FromSqlRaw(sql, parameters);
+        var sql = "SELECT * FROM \"Games\" WHERE 1=1";
+        var parameters = new List<NpgsqlParameter>();
+        int paramIndex = 0;
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            sql += $" AND \"Name\" ILIKE @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", $"%{filter.Search}%"));
+            paramIndex++;
+        }
+
+        if (filter.MinPrice.HasValue && filter.MaxPrice.HasValue)
+        {
+            sql += $" AND \"Price\" BETWEEN @p{paramIndex} AND @p{paramIndex+1}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.MinPrice.Value));
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex+1}", filter.MaxPrice.Value));
+            paramIndex += 2;
+        }
+        else if (filter.MinPrice.HasValue)
+        {
+            sql += $" AND \"Price\" >= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.MinPrice.Value));
+            paramIndex++;
+        }
+        else if (filter.MaxPrice.HasValue)
+        {
+            sql += $" AND \"Price\" <= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.MaxPrice.Value));
+            paramIndex++;
+        }
+
+        if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+        {
+            sql += $" AND \"ReleaseDate\" BETWEEN @p{paramIndex} AND @p{paramIndex+1}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.StartDate.Value));
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex+1}", filter.EndDate.Value));
+            paramIndex += 2;
+        }
+        else if (filter.StartDate.HasValue)
+        {
+            sql += $" AND \"ReleaseDate\" >= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.StartDate.Value));
+            paramIndex++;
+        }
+        else if (filter.EndDate.HasValue)
+        {
+            sql += $" AND \"ReleaseDate\" <= @p{paramIndex}";
+            parameters.Add(new NpgsqlParameter($"@p{paramIndex}", filter.EndDate.Value));
+            paramIndex++;
+        }
+
+        IQueryable<Game> query = _dbContext.Games.FromSqlRaw(sql, parameters.ToArray());
         
         int totalCount = await query.CountAsync();
         
@@ -43,7 +96,7 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
             }
         }
         
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await query.OrderBy(g => g.Id).Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
         
         return (items, totalCount);
     }
