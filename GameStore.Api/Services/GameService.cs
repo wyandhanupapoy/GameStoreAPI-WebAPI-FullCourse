@@ -60,7 +60,9 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
             game.Name,
             game.Genre?.Name ?? string.Empty,
             game.Price,
-            game.ReleaseDate
+            game.ReleaseDate,
+            game.CreatedAt,
+            game.UpdatedAt
         ));
 
         return new PagedResultDto<GameSummaryDto>
@@ -82,7 +84,9 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
             game.Name,
             game.GenreId,
             game.Price,
-            game.ReleaseDate
+            game.ReleaseDate,
+            game.CreatedAt,
+            game.UpdatedAt
         );
     }
 
@@ -109,7 +113,7 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
         // Memanggil SaveAsync di salah satu repository
         await gameRepository.SaveAsync();
 
-        return new GameDetailsDto(game.Id, game.Name, game.GenreId, game.Price, game.ReleaseDate);
+        return new GameDetailsDto(game.Id, game.Name, game.GenreId, game.Price, game.ReleaseDate, game.CreatedAt, game.UpdatedAt);
     }
 
     public async Task<bool> UpdateGameAsync(int id, UpdateGameDto updatedGame)

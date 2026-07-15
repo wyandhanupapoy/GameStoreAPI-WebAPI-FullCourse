@@ -9,7 +9,7 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
     public async Task<IEnumerable<GenreDto>> GetAllGenresAsync()
     {
         var genres = await genreRepository.GetAllAsync();
-        return genres.Select(genre => new GenreDto(genre.Id, genre.Name));
+        return genres.Select(genre => new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt));
     }
 
     public async Task<GenreDto?> GetGenreByIdAsync(int id)
@@ -17,7 +17,7 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
         var genre = await genreRepository.GetAsync(g => g.Id == id);
         if (genre is null) return null;
 
-        return new GenreDto(genre.Id, genre.Name);
+        return new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt);
     }
 
     public async Task<GenreDto> CreateGenreAsync(CreateGenreDto newGenre)
@@ -30,7 +30,7 @@ public class GenreService(IGenreRepository genreRepository) : IGenreService
         await genreRepository.AddAsync(genre);
         await genreRepository.SaveAsync();
 
-        return new GenreDto(genre.Id, genre.Name);
+        return new GenreDto(genre.Id, genre.Name, genre.CreatedAt, genre.UpdatedAt);
     }
 
     public async Task<bool> UpdateGenreAsync(int id, UpdateGenreDto updatedGenre)

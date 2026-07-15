@@ -1,6 +1,6 @@
 namespace GameStore.Api.Models;
 
-public class Game
+public class Game : IAuditableEntity
 {
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -10,4 +10,6 @@ public class Game
     public int GenreId { get; set; }
     public decimal Price { get; set; }
     public DateOnly ReleaseDate { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
