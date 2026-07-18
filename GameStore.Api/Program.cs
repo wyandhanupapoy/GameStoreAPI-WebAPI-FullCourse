@@ -10,7 +10,13 @@ using System.Threading.RateLimiting;
 using GameStore.Api.Middleware;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// 0. Add Serilog
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 // 1. Add Rate Limiting
 builder.Services.AddRateLimiter(options =>
@@ -24,13 +30,14 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// 2. Add CORS
+// 2. Add CORS (Production Ready)
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("ProductionCors",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -47,6 +54,10 @@ builder.Services.AddValidation();
 var connString = builder.Configuration.GetConnectionString("GameStore");
 builder.Services.AddDbContext<GameStoreContext>(options =>
     options.UseNpgsql(connString));
+
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<GameStoreContext>();
 
 // Add Repositories and Services
 builder.Services.AddScoped<IGameRepository, GameRepository>();
@@ -88,7 +99,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    // Gunakan HSTS di production untuk keamanan
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection(); // Paksa HTTP ke HTTPS
 app.UseExceptionHandler(); // Use Global Exception Handler
+
+// 6. Request Timing Middleware — mengukur execution time setiap request
+// Harus di-register SEAWAL mungkin agar mencakup semua middleware setelahnya
+app.UseMiddleware<RequestTimingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -97,14 +119,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRateLimiter(); // Use Rate Limiting
-app.UseCors("AllowAll"); // Use CORS
+app.UseCors("ProductionCors"); // Use Strict CORS
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("FixedPolicy"); // Enforce rate limiting ke semua controller
+app.MapHealthChecks("/health"); // Endpoint health check
 
-// NOTE: Auto-migration is removed for production readiness.
-// Run 'dotnet ef database update' manually to apply migrations.
+// 7. Auto-migration di Development mode
+// Migration: memastikan schema database up-to-date
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<GameStoreContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();

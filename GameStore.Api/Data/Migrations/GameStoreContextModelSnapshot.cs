@@ -53,7 +53,7 @@ namespace GameStore.Api.Migrations
 
                     b.HasIndex("GenreId");
 
-                    b.ToTable("Games");
+                    b.ToTable("Games", (string)null);
                 });
 
             modelBuilder.Entity("GameStore.Api.Models.Genre", b =>
@@ -76,7 +76,7 @@ namespace GameStore.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Genres");
+                    b.ToTable("Genres", (string)null);
                 });
 
             modelBuilder.Entity("GameStore.Api.Models.User", b =>
@@ -104,7 +104,7 @@ namespace GameStore.Api.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("GameStore.Api.Models.Game", b =>
