@@ -45,7 +45,6 @@ public static class FuzzySearchHelper
         if (string.IsNullOrEmpty(source) && string.IsNullOrEmpty(target)) return 1.0;
         if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target)) return 0.0;
 
-        // Case-insensitive comparison
         source = source.ToLowerInvariant();
         target = target.ToLowerInvariant();
 

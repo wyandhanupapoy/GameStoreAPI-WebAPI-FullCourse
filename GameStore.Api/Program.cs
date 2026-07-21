@@ -11,6 +11,8 @@ using GameStore.Api.Middleware;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.OpenApi;
 using Serilog;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,16 +20,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, loggerConfig) =>
     loggerConfig.ReadFrom.Configuration(context.Configuration));
 
-// 1. Add Rate Limiting
+// 1. Add Rate Limiting (IP-Based)
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("FixedPolicy", opt =>
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
     {
-        opt.PermitLimit = 100;
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        opt.QueueLimit = 2;
-    });
+        context.HttpContext.Response.ContentType = "application/json";
+        var errorResponse = new { message = "Terlalu banyak request. Silakan coba beberapa saat lagi." };
+        await JsonSerializer.SerializeAsync(context.HttpContext.Response.Body, errorResponse, cancellationToken: token);
+    };
+
+    options.AddPolicy("FixedPolicy", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100, // Maksimal 100 request
+                Window = TimeSpan.FromMinutes(1), // Per 1 menit
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            }));
 });
 
 // 2. Add CORS (Production Ready)
@@ -125,7 +139,26 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers().RequireRateLimiting("FixedPolicy"); // Enforce rate limiting ke semua controller
-app.MapHealthChecks("/health"); // Endpoint health check
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            totalDuration = report.TotalDuration.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                component = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.ToString()
+            })
+        };
+        await JsonSerializer.SerializeAsync(context.Response.Body, response);
+    }
+}); // Endpoint health check JSON
 
 // 7. Auto-migration di Development mode
 // Migration: memastikan schema database up-to-date

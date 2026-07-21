@@ -6,9 +6,9 @@ namespace GameStore.Api.Services;
 
 public interface IGenreService
 {
-    Task<PagedResultDto<GenreDto>> GetAllGenresAsync(GenreFilterDto filter);
-    Task<GenreDto?> GetGenreByIdAsync(int id);
-    Task<GenreDto> CreateGenreAsync(CreateGenreDto newGenre);
-    Task<bool> UpdateGenreAsync(int id, UpdateGenreDto updatedGenre);
-    Task DeleteGenreAsync(int id);
+    Task<PagedResultDto<GenreDto>> GetAllGenresAsync(GenreFilterDto filter, CancellationToken cancellationToken = default);
+    Task<GenreDto?> GetGenreByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<GenreDto> CreateGenreAsync(CreateGenreDto newGenre, CancellationToken cancellationToken = default);
+    Task<bool> UpdateGenreAsync(int id, UpdateGenreDto updatedGenre, CancellationToken cancellationToken = default);
+    Task DeleteGenreAsync(int id, CancellationToken cancellationToken = default);
 }

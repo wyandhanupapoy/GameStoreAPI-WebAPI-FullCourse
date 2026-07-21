@@ -11,7 +11,7 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
 {
     private readonly GameStoreContext _dbContext = dbContext;
 
-    public async Task<IEnumerable<Genre>> GetAllAsync(Expression<Func<Genre, bool>>? filter = null, string? includeProperties = null)
+    public async Task<IEnumerable<Genre>> GetAllAsync(Expression<Func<Genre, bool>>? filter = null, string? includeProperties = null, CancellationToken cancellationToken = default)
     {
         IQueryable<Genre> query = _dbContext.Genres;
 
@@ -28,10 +28,10 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
             }
         }
 
-        return await query.ToListAsync();
+        return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task<(IEnumerable<Genre> Items, int TotalCount)> GetAllWithFilterAsync(GenreFilterDto filter, string? includeProperties = null)
+    public async Task<(IEnumerable<Genre> Items, int TotalCount)> GetAllWithFilterAsync(GenreFilterDto filter, string? includeProperties = null, CancellationToken cancellationToken = default)
     {
         var sql = "SELECT * FROM \"Genres\" WHERE 1=1";
         var parameters = new List<NpgsqlParameter>();
@@ -66,7 +66,7 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
 
         IQueryable<Genre> query = _dbContext.Genres.FromSqlRaw(sql, parameters.ToArray());
         
-        int totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync(cancellationToken);
         
         if (includeProperties != null)
         {
@@ -76,12 +76,12 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
             }
         }
         
-        var items = await query.OrderBy(g => g.Id).Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
+        var items = await query.OrderBy(g => g.Id).Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync(cancellationToken);
         
         return (items, totalCount);
     }
 
-    public async Task<Genre?> GetAsync(Expression<Func<Genre, bool>> filter, string? includeProperties = null)
+    public async Task<Genre?> GetAsync(Expression<Func<Genre, bool>> filter, string? includeProperties = null, CancellationToken cancellationToken = default)
     {
         IQueryable<Genre> query = _dbContext.Genres;
         query = query.Where(filter);
@@ -94,12 +94,12 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
             }
         }
 
-        return await query.FirstOrDefaultAsync();
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task AddAsync(Genre entity)
+    public async Task AddAsync(Genre entity, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Genres.AddAsync(entity);
+        await _dbContext.Genres.AddAsync(entity, cancellationToken);
     }
 
     public void Remove(Genre entity)
@@ -112,8 +112,8 @@ public class GenreRepository(GameStoreContext dbContext) : IGenreRepository
         _dbContext.Genres.Update(entity);
     }
 
-    public async Task SaveAsync()
+    public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

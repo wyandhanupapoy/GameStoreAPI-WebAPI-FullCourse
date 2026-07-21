@@ -1,0 +1,1014 @@
+{
+  "info": {
+    "_postman_id": "gamestore-api-collection",
+    "name": "🎮 Game Store API",
+    "description": "Complete Postman collection untuk Game Store API.\n\n## Cara Pakai\n1. Jalankan `dotnet run` di project\n2. Import collection ini ke Postman\n3. Pastikan base URL `http://localhost:5217` sesuai\n4. Jalankan **Register** → **Login** terlebih dahulu untuk mendapatkan JWT token\n5. Token otomatis tersimpan di collection variable `jwt_token`\n\n## Endpoint Overview\n- **Auth**: Register & Login\n- **Games**: CRUD dengan pagination (Optimized)\n- **Games (Fuzzy Search)**: Typo-tolerant search\n- **Genres**: CRUD dengan pagination",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5217",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "game_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "genre_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Authentication endpoints. Jalankan Register → Login untuk mendapatkan JWT token.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.token) {",
+                  "        pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "        console.log('✅ Token saved from register');",
+                  "    }",
+                  "    pm.test('Register berhasil', function () {",
+                  "        pm.expect(pm.response.code).to.eql(200);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"dhanu\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register user baru. Password minimal 6 karakter."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.token) {",
+                  "        pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "        console.log('✅ Token saved: ' + jsonData.token.substring(0, 20) + '...');",
+                  "    }",
+                  "    pm.test('Login berhasil', function () {",
+                  "        pm.expect(pm.response.code).to.eql(200);",
+                  "        pm.expect(jsonData).to.have.property('token');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"dhanu\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login dan mendapatkan JWT token. Token otomatis disimpan ke collection variable `jwt_token`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎮 Games",
+      "description": "Endpoint CRUD game yang sudah dioptimasi menggunakan LINQ Projection dan AsNoTracking.",
+      "item": [
+        {
+          "name": "Get Games (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Has pagination fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('totalCount');",
+                  "    pm.expect(jsonData).to.have.property('page');",
+                  "    pm.expect(jsonData).to.have.property('pageSize');",
+                  "});",
+                  "pm.test('Response time < 1s', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games?Page=1&PageSize=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ],
+              "query": [
+                {
+                  "key": "Page",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "Search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "MinPrice",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "MaxPrice",
+                  "value": "70",
+                  "disabled": true
+                },
+                {
+                  "key": "StartDate",
+                  "value": "2020-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "EndDate",
+                  "value": "2024-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Mengambil games dengan pagination dan filter.\n\nFilter tersedia:\n- `Search` — pencarian teks nama game\n- `MinPrice` / `MaxPrice` — filter harga\n- `StartDate` / `EndDate` — filter release date\n- `Page` / `PageSize` — pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Games — With Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games?Page=1&PageSize=10&Search=Final Fantasy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ],
+              "query": [
+                {
+                  "key": "Page",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "Search",
+                  "value": "Final Fantasy"
+                }
+              ]
+            },
+            "description": "Contoh search menggunakan ILIKE (exact substring, BUKAN typo-tolerant)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Games — With Price Filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games?Page=1&PageSize=10&MinPrice=0&MaxPrice=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ],
+              "query": [
+                {
+                  "key": "Page",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "MinPrice",
+                  "value": "0"
+                },
+                {
+                  "key": "MaxPrice",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Filter games dengan harga $0 — $20."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Games — With Date Filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games?Page=1&PageSize=10&StartDate=2023-01-01&EndDate=2024-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ],
+              "query": [
+                {
+                  "key": "Page",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "StartDate",
+                  "value": "2023-01-01"
+                },
+                {
+                  "key": "EndDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            },
+            "description": "Filter games yang release di tahun 2023-2024."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Game By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Has game details', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('genreId');",
+                  "    pm.expect(jsonData).to.have.property('price');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/{{game_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "{{game_id}}"
+              ]
+            },
+            "description": "Mengambil detail game berdasarkan ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('game_id', jsonData.id);",
+                  "    console.log('✅ Game created with ID: ' + jsonData.id);",
+                  "    pm.test('Game berhasil dibuat', function () {",
+                  "        pm.expect(pm.response.code).to.eql(201);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Elden Ring\",\n    \"genreId\": 1,\n    \"price\": 59.99,\n    \"releaseDate\": \"2022-02-25\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ]
+            },
+            "description": "Membuat game baru. Membutuhkan JWT token (Authorization header).\n\nID game yang baru dibuat otomatis disimpan ke variable `game_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Game",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Elden Ring - Shadow of the Erdtree Edition\",\n    \"price\": 79.99\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/{{game_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "{{game_id}}"
+              ]
+            },
+            "description": "Update game (PATCH — partial update). Hanya field yang dikirim yang akan di-update.\n\nMembutuhkan JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Game",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/{{game_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "{{game_id}}"
+              ]
+            },
+            "description": "Hapus game berdasarkan ID. Membutuhkan JWT token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Games — Fuzzy Search",
+      "description": "Typo-tolerant search menggunakan Levenshtein Distance + Token Matching.\n\nContoh: \"Winbing Eleven\" → \"Winning Eleven\"",
+      "item": [
+        {
+          "name": "Search: \"Winbing Eleven\" (typo Winning)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Returns Winning Eleven games', function () {",
+                  "    pm.expect(jsonData.length).to.be.above(0);",
+                  "    var names = jsonData.map(g => g.name);",
+                  "    var hasWinning = names.some(n => n.includes('Winning Eleven'));",
+                  "    pm.expect(hasWinning).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Has relevance score', function () {",
+                  "    pm.expect(jsonData[0]).to.have.property('relevanceScore');",
+                  "    pm.expect(jsonData[0].relevanceScore).to.be.above(0.6);",
+                  "});",
+                  "",
+                  "console.log('🔍 Search: Winbing Eleven');",
+                  "jsonData.forEach(g => {",
+                  "    console.log(`  → ${g.name} (score: ${g.relevanceScore.toFixed(3)})`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Winbing Eleven",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Winbing Eleven"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Winbing → Winning**\n\nExpected: Winning Eleven 2024, 2023, 10, 9\nRelevance score: ~0.928"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Fial Fantsy\" (typo Final Fantasy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns Final Fantasy games', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.length).to.be.above(0);",
+                  "    var hasFF = jsonData.some(g => g.name.includes('Final Fantasy'));",
+                  "    pm.expect(hasFF).to.be.true;",
+                  "});",
+                  "",
+                  "console.log('🔍 Search: Fial Fantsy');",
+                  "pm.response.json().forEach(g => {",
+                  "    console.log(`  → ${g.name} (score: ${g.relevanceScore.toFixed(3)})`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Fial Fantsy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Fial Fantsy"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Fial Fantsy → Final Fantasy**\n\nExpected: Final Fantasy VII, Remake, Rebirth, X, XV, XVI"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"God of Warr\" (typo War)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns God of War games', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.length).to.be.above(0);",
+                  "});",
+                  "",
+                  "console.log('🔍 Search: God of Warr');",
+                  "pm.response.json().forEach(g => {",
+                  "    console.log(`  → ${g.name} (score: ${g.relevanceScore.toFixed(3)})`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=God of Warr",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "God of Warr"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Warr → War**\n\nExpected: God of War, God of War Ragnarok"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Residen Evl\" (typo Resident Evil)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Residen Evl",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Residen Evl"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Residen Evl → Resident Evil**"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Tekkn\" (typo Tekken)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Tekkn",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Tekkn"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Tekkn → Tekken**"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Holow Knigt\" (typo Hollow Knight)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Holow Knigt",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Holow Knigt"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Holow Knigt → Hollow Knight**"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Stret Figter\" (typo Street Fighter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Stret Figter",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Stret Figter"
+                }
+              ]
+            },
+            "description": "🔍 **Typo Test: Stret Figter → Street Fighter**"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: \"Zelda\" (exact keyword)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Zelda",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Zelda"
+                }
+              ]
+            },
+            "description": "🔍 **Exact Match Test**\n\nExpected: The Legend of Zelda Breath of the Wild, Tears of the Kingdom\nRelevance score: 1.0 (substring match)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search: With Custom Threshold (0.8)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=Winbing Eleven&threshold=0.8",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Winbing Eleven"
+                },
+                {
+                  "key": "threshold",
+                  "value": "0.8"
+                }
+              ]
+            },
+            "description": "🔍 **Threshold Test**\n\nThreshold 0.8 = hanya hasil yang sangat mirip.\nDibandingkan dengan default 0.6 yang lebih lenient."
+          },
+          "response": []
+        },
+        {
+          "name": "Search: Empty Query (Error Test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 400 Bad Request', function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/games/search?q=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "🔍 **Error Test**: Query kosong harus return 400 Bad Request."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Genres",
+      "description": "CRUD endpoints untuk Genre.",
+      "item": [
+        {
+          "name": "Get Genres (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Has items', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.items.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/genres?Page=1&PageSize=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "genres"
+              ],
+              "query": [
+                {
+                  "key": "Page",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "Search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "StartDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "EndDate",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Mengambil semua genres dengan pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Genre By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/genres/{{genre_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "genres",
+                "{{genre_id}}"
+              ]
+            },
+            "description": "Mengambil genre berdasarkan ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Genre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('genre_id', jsonData.id);",
+                  "    console.log('✅ Genre created with ID: ' + jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Visual Novel\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/genres",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "genres"
+              ]
+            },
+            "description": "Membuat genre baru. Membutuhkan JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Genre",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Visual Novel / Dating Sim\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/genres/{{genre_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "genres",
+                "{{genre_id}}"
+              ]
+            },
+            "description": "Update genre (PATCH). Membutuhkan JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Genre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/genres/{{genre_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "genres",
+                "{{genre_id}}"
+              ]
+            },
+            "description": "Hapus genre berdasarkan ID. Membutuhkan JWT token.\n\n⚠️ Cascade delete: semua game yang berelasi dengan genre ini akan ikut terhapus."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "response": [],
+      "name": "🩺 Health Check",
+      "request": {
+        "description": "Mengecek status kesehatan API dan koneksi Database. Mengembalikan format JSON berkat HealthCheckOptions kustom.",
+        "header": [],
+        "url": {
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ],
+          "raw": "{{base_url}}/health"
+        },
+        "method": "GET"
+      }
+    }
+  ]
+}

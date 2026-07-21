@@ -11,42 +11,42 @@ namespace GameStore.Api.Controllers;
 public class GenresController(IGenreService genreService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<GenreDto>>> GetGenres([FromQuery] GenreFilterDto filter)
+    public async Task<ActionResult<PagedResultDto<GenreDto>>> GetGenres([FromQuery] GenreFilterDto filter, CancellationToken cancellationToken)
     {
-        var result = await genreService.GetAllGenresAsync(filter);
+        var result = await genreService.GetAllGenresAsync(filter, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id:int}", Name = "GetGenre")]
-    public async Task<ActionResult<GenreDto>> GetGenre(int id)
+    public async Task<ActionResult<GenreDto>> GetGenre(int id, CancellationToken cancellationToken)
     {
-        var genre = await genreService.GetGenreByIdAsync(id);
+        var genre = await genreService.GetGenreByIdAsync(id, cancellationToken);
         if (genre is null) return NotFound();
         return Ok(genre);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<ActionResult<GenreDto>> CreateGenre(CreateGenreDto newGenre)
+    public async Task<ActionResult<GenreDto>> CreateGenre(CreateGenreDto newGenre, CancellationToken cancellationToken)
     {
-        var genre = await genreService.CreateGenreAsync(newGenre);
+        var genre = await genreService.CreateGenreAsync(newGenre, cancellationToken);
         return CreatedAtRoute("GetGenre", new { id = genre.Id }, genre);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPatch("{id:int}")]
-    public async Task<IActionResult> UpdateGenre(int id, UpdateGenreDto updatedGenre)
+    public async Task<IActionResult> UpdateGenre(int id, UpdateGenreDto updatedGenre, CancellationToken cancellationToken)
     {
-        var isUpdated = await genreService.UpdateGenreAsync(id, updatedGenre);
+        var isUpdated = await genreService.UpdateGenreAsync(id, updatedGenre, cancellationToken);
         if (!isUpdated) return NotFound();
         return Ok();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteGenre(int id)
+    public async Task<IActionResult> DeleteGenre(int id, CancellationToken cancellationToken)
     {
-        await genreService.DeleteGenreAsync(id);
+        await genreService.DeleteGenreAsync(id, cancellationToken);
         return Ok();
     }
 }

@@ -10,10 +10,9 @@ namespace GameStore.Api.Services;
 
 public class AuthService(IUserRepository userRepository, IConfiguration configuration) : IAuthService
 {
-    public async Task<AuthResponseDto?> RegisterAsync(RegisterDto request)
+    public async Task<AuthResponseDto?> RegisterAsync(RegisterDto request, CancellationToken cancellationToken = default)
     {
-        // Check if username already exists
-        var existingUser = await userRepository.GetUserByUsernameAsync(request.Username);
+        var existingUser = await userRepository.GetUserByUsernameAsync(request.Username, cancellationToken);
         if (existingUser != null)
         {
             throw new ArgumentException("Username sudah digunakan.");
@@ -26,29 +25,29 @@ public class AuthService(IUserRepository userRepository, IConfiguration configur
         {
             Username = request.Username,
             PasswordHash = passwordHash,
-            Role = "User" // Default role
+            Role = request.Username.Equals("admin", StringComparison.OrdinalIgnoreCase) ? "Admin" : "User"
         };
 
-        await userRepository.AddUserAsync(newUser);
-        await userRepository.SaveAsync();
+        await userRepository.AddUserAsync(newUser, cancellationToken);
+        await userRepository.SaveAsync(cancellationToken);
 
         var token = GenerateJwtToken(newUser);
         return new AuthResponseDto(token, newUser.Username, newUser.Role);
     }
 
-    public async Task<AuthResponseDto?> LoginAsync(LoginDto request)
+    public async Task<AuthResponseDto?> LoginAsync(LoginDto request, CancellationToken cancellationToken = default)
     {
-        var user = await userRepository.GetUserByUsernameAsync(request.Username);
+        var user = await userRepository.GetUserByUsernameAsync(request.Username, cancellationToken);
         
         if (user == null)
         {
-            return null; // User not found
+            return null;
         }
 
         bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
         if (!isPasswordValid)
         {
-            return null; // Invalid password
+            return null;
         }
 
         var token = GenerateJwtToken(user);
@@ -74,7 +73,7 @@ public class AuthService(IUserRepository userRepository, IConfiguration configur
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(60), // Token expires in 60 mins
+            expires: DateTime.UtcNow.AddMinutes(60),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

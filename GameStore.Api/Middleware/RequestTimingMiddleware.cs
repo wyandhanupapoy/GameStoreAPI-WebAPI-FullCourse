@@ -10,7 +10,6 @@ public class RequestTimingMiddleware(RequestDelegate next, ILogger<RequestTiming
     {
         var stopwatch = Stopwatch.StartNew();
 
-        // Register callback untuk menambahkan header sebelum response dikirim
         context.Response.OnStarting(() =>
         {
             stopwatch.Stop();

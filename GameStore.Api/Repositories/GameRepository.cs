@@ -11,7 +11,7 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
 {
     private readonly GameStoreContext _dbContext = dbContext;
 
-    public async Task<IEnumerable<Game>> GetAllAsync(Expression<Func<Game, bool>>? filter = null, string? includeProperties = null)
+    public async Task<IEnumerable<Game>> GetAllAsync(Expression<Func<Game, bool>>? filter = null, string? includeProperties = null, CancellationToken cancellationToken = default)
     {
         IQueryable<Game> query = _dbContext.Games;
 
@@ -28,10 +28,10 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
             }
         }
 
-        return await query.ToListAsync();
+        return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task<(List<GameSummaryDto> Items, int TotalCount)> GetAllWithFilterAsync(GameFilterDto filter)
+    public async Task<(List<GameSummaryDto> Items, int TotalCount)> GetAllWithFilterAsync(GameFilterDto filter, CancellationToken cancellationToken = default)
     {
         IQueryable<Game> query = _dbContext.Games.AsNoTracking();
 
@@ -53,7 +53,7 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
         if (filter.EndDate.HasValue)
             query = query.Where(g => g.ReleaseDate <= filter.EndDate.Value);
 
-        int totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
             .OrderBy(g => g.Id)
@@ -68,12 +68,12 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
                 g.CreatedAt,
                 g.UpdatedAt
             ))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return (items, totalCount);
     }
 
-    public async Task<Game?> GetAsync(Expression<Func<Game, bool>> filter, string? includeProperties = null)
+    public async Task<Game?> GetAsync(Expression<Func<Game, bool>> filter, string? includeProperties = null, CancellationToken cancellationToken = default)
     {
         IQueryable<Game> query = _dbContext.Games;
         query = query.Where(filter);
@@ -86,12 +86,12 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
             }
         }
 
-        return await query.FirstOrDefaultAsync();
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task AddAsync(Game entity)
+    public async Task AddAsync(Game entity, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Games.AddAsync(entity);
+        await _dbContext.Games.AddAsync(entity, cancellationToken);
     }
 
     public void Remove(Game entity)
@@ -104,22 +104,22 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
         _dbContext.Games.Update(entity);
     }
 
-    public async Task SaveAsync()
+    public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
 
 
-    public async Task<List<(int Id, string Name)>> GetAllGameNamesAsync()
+    public async Task<List<(int Id, string Name)>> GetAllGameNamesAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.Games
             .AsNoTracking()
             .Select(g => new ValueTuple<int, string>(g.Id, g.Name))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<GameSummaryDto>> GetByIdsAsync(List<int> ids)
+    public async Task<List<GameSummaryDto>> GetByIdsAsync(List<int> ids, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Games
             .AsNoTracking()
@@ -133,6 +133,6 @@ public class GameRepository(GameStoreContext dbContext) : IGameRepository
                 g.CreatedAt,
                 g.UpdatedAt
             ))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 }

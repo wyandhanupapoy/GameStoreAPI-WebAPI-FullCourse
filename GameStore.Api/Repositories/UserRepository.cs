@@ -6,18 +6,18 @@ namespace GameStore.Api.Repositories;
 
 public class UserRepository(GameStoreContext dbContext) : IUserRepository
 {
-    public async Task<User?> GetUserByUsernameAsync(string username)
+    public async Task<User?> GetUserByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Users.SingleOrDefaultAsync(u => u.Username == username);
+        return await dbContext.Users.SingleOrDefaultAsync(u => u.Username == username, cancellationToken);
     }
 
-    public async Task AddUserAsync(User user)
+    public async Task AddUserAsync(User user, CancellationToken cancellationToken = default)
     {
-        await dbContext.Users.AddAsync(user);
+        await dbContext.Users.AddAsync(user, cancellationToken);
     }
 
-    public async Task SaveAsync()
+    public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
