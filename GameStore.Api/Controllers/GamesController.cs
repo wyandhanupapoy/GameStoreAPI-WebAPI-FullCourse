@@ -17,15 +17,6 @@ public class GamesController(IGameService gameService) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Endpoint untuk benchmark — mengembalikan SEMUA game tanpa pagination.
-    /// Menggunakan optimized query (AsNoTracking + Projection).
-    /// 
-    /// Bandingkan response time endpoint ini dengan GET /games (paginated)
-    /// menggunakan header X-Response-Time-Ms di response.
-    /// 
-    /// ⚠️ HANYA UNTUK BENCHMARK — di production, selalu gunakan pagination.
-    /// </summary>
     [HttpGet("all")]
     public async Task<ActionResult<List<GameSummaryDto>>> GetAllGames()
     {
@@ -33,13 +24,6 @@ public class GamesController(IGameService gameService) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Endpoint optimized — versi optimasi dari GET /games.
-    /// Menggunakan LINQ Projection, AsNoTracking, dan single query.
-    /// 
-    /// Bandingkan response time endpoint ini dengan GET /games (original)
-    /// untuk melihat perbedaan performa.
-    /// </summary>
     [HttpGet("optimized")]
     public async Task<ActionResult<PagedResultDto<GameSummaryDto>>> GetGamesOptimized([FromQuery] GameFilterDto filter)
     {
@@ -47,21 +31,6 @@ public class GamesController(IGameService gameService) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Fuzzy search endpoint — mendukung typo tolerance.
-    /// 
-    /// Contoh penggunaan:
-    /// GET /games/search?q=Winbing+Eleven         → "Winning Eleven 2024", "Winning Eleven 2023"
-    /// GET /games/search?q=Fial+Fantsy             → "Final Fantasy VII", "Final Fantasy XVI", ...
-    /// GET /games/search?q=Grand+Thef+Autto        → "Grand Theft Auto V", ...
-    /// GET /games/search?q=residen+evil             → "Resident Evil 4 Remake", ...
-    /// 
-    /// Parameter:
-    /// - q: search keyword (required)
-    /// - threshold: minimum similarity score 0.0-1.0 (optional, default 0.6)
-    ///   Semakin rendah → semakin banyak hasil tapi kurang relevan
-    ///   Semakin tinggi → semakin sedikit hasil tapi lebih relevan
-    /// </summary>
     [HttpGet("search")]
     public async Task<ActionResult<List<SearchResultDto>>> SearchGames(
         [FromQuery(Name = "q")] string? query,
