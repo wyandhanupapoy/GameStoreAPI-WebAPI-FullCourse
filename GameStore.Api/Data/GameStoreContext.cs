@@ -43,7 +43,6 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options) : DbCo
     {
         base.OnModelCreating(modelBuilder);
 
-        // Ensure Username is unique
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();

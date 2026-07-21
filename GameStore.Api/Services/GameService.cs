@@ -10,21 +10,11 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
 {
     public async Task<PagedResultDto<GameSummaryDto>> GetAllGamesAsync(GameFilterDto filter)
     {
-        var (items, totalCount) = await gameRepository.GetAllWithFilterAsync(filter, includeProperties: "Genre");
-
-        var summaryItems = items.Select(game => new GameSummaryDto(
-            game.Id,
-            game.Name,
-            game.Genre?.Name ?? string.Empty,
-            game.Price,
-            game.ReleaseDate,
-            game.CreatedAt,
-            game.UpdatedAt
-        ));
+        var (items, totalCount) = await gameRepository.GetAllWithFilterAsync(filter);
 
         return new PagedResultDto<GameSummaryDto>
         {
-            Items = summaryItems,
+            Items = items,
             TotalCount = totalCount,
             Page = filter.Page,
             PageSize = filter.PageSize
@@ -101,24 +91,6 @@ public class GameService(IGameRepository gameRepository, IGenreRepository genreR
             gameRepository.Remove(existingGame);
             await gameRepository.SaveAsync();
         }
-    }
-
-    public async Task<List<GameSummaryDto>> GetAllGamesNoPaginationAsync()
-    {
-        return await gameRepository.GetAllOptimizedAsync();
-    }
-
-    public async Task<PagedResultDto<GameSummaryDto>> GetAllGamesOptimizedAsync(GameFilterDto filter)
-    {
-        var (items, totalCount) = await gameRepository.GetAllWithFilterOptimizedAsync(filter);
-
-        return new PagedResultDto<GameSummaryDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = filter.Page,
-            PageSize = filter.PageSize
-        };
     }
 
 

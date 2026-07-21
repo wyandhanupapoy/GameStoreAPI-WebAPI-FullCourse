@@ -17,20 +17,6 @@ public class GamesController(IGameService gameService) : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("all")]
-    public async Task<ActionResult<List<GameSummaryDto>>> GetAllGames()
-    {
-        var result = await gameService.GetAllGamesNoPaginationAsync();
-        return Ok(result);
-    }
-
-    [HttpGet("optimized")]
-    public async Task<ActionResult<PagedResultDto<GameSummaryDto>>> GetGamesOptimized([FromQuery] GameFilterDto filter)
-    {
-        var result = await gameService.GetAllGamesOptimizedAsync(filter);
-        return Ok(result);
-    }
-
     [HttpGet("search")]
     public async Task<ActionResult<List<SearchResultDto>>> SearchGames(
         [FromQuery(Name = "q")] string? query,
